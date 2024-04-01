@@ -1,0 +1,27 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    padding: 1.5rem;
+    background: #002EA3;
+    color: #fff;
+
+    .title {
+        align-content: center;
+    }
+
+    ul {
+        list-style: none;
+
+        li {
+            padding: 0.5rem;
+            cursor: pointer;
+
+            a {
+                text-decoration: none;
+                &:visited {
+                    color: #fff;
+                }
+            }
+        }
+    }
+}

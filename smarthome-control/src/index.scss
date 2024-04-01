@@ -1,0 +1,45 @@
+@import "./styles/fonts.scss";
+@import "./styles/utils.scss";
+
+@mixin sm-viewport {
+  @media (min-width: 48em) {
+    @content;
+  }
+}
+@mixin md-viewport {
+  @media (min-width: 62em) {
+    @content;
+  }
+}
+@mixin lg-viewport {
+  @media (min-width: 75em) {
+    @content;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  font-family: "Montserrat";
+  background: #fff;
+  height: 100%;
+  color: #000;
+
+  font-size: 16px; // Default base font size for mobile devices
+
+  @include sm-viewport {
+    font-size: 1rem; // 16px
+  }
+
+  @include md-viewport {
+    font-size: 1.125rem; // 18px
+  }
+
+  @include lg-viewport {
+    font-size: 1.125rem; // 20px
+  }
+}

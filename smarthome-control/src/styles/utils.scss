@@ -1,0 +1,100 @@
+@mixin sm-viewport {
+  @media (min-width: 48em) {
+    @content;
+  }
+}
+@mixin md-viewport {
+  @media (min-width: 62em) {
+    @content;
+  }
+}
+@mixin lg-viewport {
+  @media (min-width: 75em) {
+    @content;
+  }
+}
+
+.privacy-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #000;
+  z-index: 2;
+}
+
+.section {
+  max-width: 1280px;
+  margin: 0 auto;
+  // line-height: var(--mono-line-height);
+  // font-size: 1.1rem;
+  padding: 3.3em 1rem 3.3em 1rem;
+  background-size: contain;
+  background-repeat: repeat-y;
+  padding-bottom: 3em;
+}
+.d-flex {
+  display: flex;
+}
+
+// Base font sizes
+h1 {
+  font-size: 1.5rem; // Default font size for mobile
+  @include sm-viewport {
+    font-size: 1.75rem; // Adjust for small devices
+  }
+  @include md-viewport {
+    font-size: 2rem; // Adjust for medium devices
+  }
+  @include lg-viewport {
+    font-size: 2.5rem; // Adjust for large devices
+  }
+}
+
+.description {
+  font-size: 1rem; // Default font size for mobile
+  @include sm-viewport {
+    font-size: 1.125rem; // Adjust for small devices
+  }
+  @include md-viewport {
+    font-size: 1.25rem; // Adjust for medium devices
+  }
+  @include lg-viewport {
+    font-size: 1.5rem; // Adjust for large devices
+  }
+}
+
+.content {
+  font-size: 0.875rem; // Default font size for mobile
+  @include sm-viewport {
+    font-size: 1rem; // Adjust for small devices
+  }
+  @include md-viewport {
+    font-size: 1.125rem; // Adjust for medium devices
+  }
+  @include lg-viewport {
+    font-size: 1.25rem; // Adjust for large devices
+  }
+}
+
+.text {
+  font-size: 0.875rem; // Default font size for mobile
+  //   @include sm-viewport {
+  //     font-size: 1rem; // Adjust for small devices
+  //   }
+  //   @include md-viewport {
+  //     font-size: 1.125rem; // Adjust for medium devices
+  //   }
+  //   @include lg-viewport {
+  //     font-size: 1.25rem; // Adjust for large devices
+  //   }
+}
+
+.half-width {
+  width: 100%;
+
+  @include lg-viewport {
+    width: 66%; // Adjust for large devices
+  }
+}
