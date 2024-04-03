@@ -1,0 +1,91 @@
+.add-device-modal {
+  // Fullscreen translucent background
+  position: fixed; // Fixed position to cover the entire screen
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5); // Translucent background
+  display: flex;
+  align-items: center; // Center content vertically
+  justify-content: center; // Center content horizontally
+  z-index: 1000; // Ensure it's above other content
+
+  // Modal box
+  .modal-content {
+    background-color: #fff; // White background for the modal box
+    border-radius: 8px; // Optional: rounded corners
+    padding: 2rem; // Spacing inside the modal box
+    width: 90%; // Use a percentage of the screen width
+    max-width: 500px; // Maximum width of the modal box
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); // Optional: drop shadow for depth
+
+    // Styles for your modal content here
+    .brand-choice {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      .brands {
+        width: 10rem;
+        height: 5rem;
+        object-fit: contain;
+        padding: 1rem;
+        border: 1px solid #ccc;
+      }
+    }
+    .loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.65rem;
+    }
+
+    .device-list-container {
+      list-style: none;
+
+      .info-container {
+        display: grid;
+        grid-template-columns: 1fr 3fr 5fr;
+        justify-items: center;
+        align-items: center;
+
+        .info-image {
+          img {
+            width: 50px;
+            height: 50px;
+          }
+        }
+      }
+    }
+    .cancel-btn {
+      display: flex;
+      padding: 0.5rem 1.5rem;
+    //   width: fit-content;
+      background: #002ea3;
+      color: #fff;
+      margin-top: 2rem;
+      margin-left: auto;
+      margin-right: auto;
+      justify-content: center;
+    }
+    .add-btn {
+      display: flex;
+      padding: 0.5rem 1.5rem;
+    //   width: fit-content;
+      background: #002ea3;
+      color: #fff;
+      margin-top: 2rem;
+      margin-left: auto;
+      margin-right: auto;
+      justify-content: center;
+    }
+    .final-btns {
+      display: flex;
+      justify-content: center;
+      gap: 4rem;
+      .cancel-btn, .add-btn {
+        margin: 2rem 0 0 0;
+      }
+    }
+  }
+}

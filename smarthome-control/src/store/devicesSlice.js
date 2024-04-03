@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { loadFromLocalStorage } from './utils'
 
 // Assuming fetchDevices is defined elsewhere using createAsyncThunk
 export const fetchDevices = createAsyncThunk(
@@ -6,7 +7,7 @@ export const fetchDevices = createAsyncThunk(
   async () => {
     const response = await fetch('http://127.0.0.1:5000/devices');
     const data = await response.json();
-    return data;
+    return data.map(device => ({ ...device, selected: false }));
   }
 );
 
@@ -18,7 +19,12 @@ const devicesSlice = createSlice({
     error: null
   },
   reducers: {
-    // Your reducers here
+    toggleDeviceSelected: (state, action) => {
+      const deviceIndex = state.devices.findIndex(device => device.id === action.payload);
+      if (deviceIndex !== -1) {
+        state.devices[deviceIndex].selected = !state.devices[deviceIndex].selected;
+      }
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -27,7 +33,13 @@ const devicesSlice = createSlice({
       })
       .addCase(fetchDevices.fulfilled, (state, action) => {
         state.loading = false;
-        state.devices = action.payload;
+        const storedDevices = loadFromLocalStorage('selectedDevices') || [];
+        state.devices = action.payload.map(device => {
+          // Find if the current device is in storedDevices based on name and ip
+          const isSelected = storedDevices.some(storedDevice => storedDevice.name === device.name && storedDevice.ip === device.ip);
+          return { ...device, selected: isSelected };
+        });
+        // state.devices = action.payload;
       })
       .addCase(fetchDevices.rejected, (state, action) => {
         state.loading = false;
@@ -36,4 +48,5 @@ const devicesSlice = createSlice({
   }
 });
 
+export const { toggleDeviceSelected } = devicesSlice.actions;
 export default devicesSlice.reducer;
