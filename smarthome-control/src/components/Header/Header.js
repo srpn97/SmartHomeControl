@@ -30,12 +30,12 @@ const Header = () => {
                     </div>
                     <nav>
                         <ul className='d-flex nav-list'>
-                            <li>
+                            {/* <li>
                                 <Link to="home">Home</Link>
                             </li>
                             <li>
                                 <Link to="help">Help</Link>
-                            </li>
+                            </li> */}
                             <li onClick={showAddDeviceModal} className='add-icon'>
                                 <span className='plus-sign'>+</span>
                             </li>

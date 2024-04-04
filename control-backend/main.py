@@ -1,14 +1,50 @@
-# Original Implementation with Flask
+# Server Using FastAPI
 
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+
+from fastapi import FastAPI, WebSocket, HTTPException, Body
+from typing import Optional, List
+from pydantic import BaseModel
 import asyncio
-from kasa import Discover, SmartBulb, SmartPlug, SmartStrip
+from kasa import Discover, SmartStrip
+import json
+from fastapi import WebSocketDisconnect
+from typing import List
+from fastapi.middleware.cors import CORSMiddleware
 
-app = Flask(__name__)
-CORS(app)
+app = FastAPI()
 
+allowed_origins = [
+    "http://localhost:3000",  # Allow web applications hosted on localhost:3000
+    "*",    # Allow a web application hosted at example.com
+]
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,  # List of allowed origins
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],  # List of allowed methods
+    allow_headers=["X-Custom-Header"],  # List of allowed headers
+)
+
+connections: List[WebSocket] = []
+
+class DeviceControlData(BaseModel):  # Pydantic models to validate request bodies
+    action: str
+    ip: str
+    socket_number: Optional[int] = None
+
+class DeviceInfoData(BaseModel):
+    device_type: str
+    id: int
+    ip: str
+    is_strip_child: bool
+    model: str
+    name: str
+    parent_ip: str
+    socket_number: int
+    selected: Optional[bool] = None 
+
+# Your async functions remain largely unchanged
 async def get_devices():
     devices = await Discover.discover()
     detailed_devices = []
@@ -44,10 +80,10 @@ async def get_devices():
 
     return detailed_devices
 
-@app.route('/devices', methods=['GET'])
-def list_devices():
-    devices = asyncio.run(get_devices())
-    return jsonify(devices)
+@app.get("/devices")
+async def list_devices():
+    devices = await get_devices()
+    return devices
 
 async def control_device(action, ip, socket_number=None):
     devices = await Discover.discover()
@@ -72,18 +108,12 @@ async def control_device(action, ip, socket_number=None):
         return True
     return False
 
-@app.route('/device/control', methods=['POST'])
-def device_control():
-    data = request.json
-    action = data.get('action')
-    ip = data.get('ip')
-    socket_number = data.get('socket_number', None)  # Optional
-
-    if action not in ['on', 'off']:
-        return jsonify({"error": "Invalid action"}), 400
-    
-    success = asyncio.run(control_device(action, ip, socket_number))
-    return jsonify({"success": success})
+@app.post("/device/control")
+async def device_control(data: DeviceControlData):
+    if data.action not in ['on', 'off']:
+        raise HTTPException(status_code=400, detail="Invalid action")
+    success = await control_device(data.action, data.ip, data.socket_number)
+    return {"success": success}
 
 async def get_device_details(ip):
     devices = await Discover.discover()
@@ -127,35 +157,51 @@ async def get_device_details(ip):
     else:
         return None
 
-async def get_device_status(device_info):
-    ip = device_info.get('ip')
-    socket_no = device_info.get('socket_number', None)
+async def get_device_status(device_info: DeviceInfoData):
+    ip = device_info.ip  # Direct attribute access
+    socket_no = device_info.socket_number  # Direct attribute access, can be None if not provided
     device = await Discover.discover_single(ip)
     await device.update()
 
-    # Update the base device info with the status
-    device_info['is_on'] = device.is_on
+    # Initialize the base device info with existing data and update the status
+    updated_device_info = device_info.dict()
+    updated_device_info['is_on'] = device.is_on
 
     # Handle SmartStrip children specifically
-    if device_info.get('is_strip_child') and socket_no is not None:
+    if device_info.is_strip_child and socket_no is not None:
         child_device = device.children[socket_no]
-        device_info['is_on'] = child_device.is_on
+        updated_device_info['is_on'] = child_device.is_on
 
-    return device_info
-
-def get_device_statuses(devices_info):
-    async def async_get_device_statuses(devices_info):
-        tasks = [get_device_status(device_info) for device_info in devices_info]
-        return await asyncio.gather(*tasks)
-
-    return asyncio.run(async_get_device_statuses(devices_info))
+    return updated_device_info
 
 
-@app.route('/device/details', methods=['POST'])
-def device_details():
-    devices_info = request.json
-    updated_devices_info = get_device_statuses(devices_info)
-    return jsonify(updated_devices_info)
+async def get_device_statuses(devices_info):
+    tasks = [get_device_status(device_info) for device_info in devices_info]
+    return await asyncio.gather(*tasks)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+@app.post("/device/details")
+async def device_details(devices_info: List[DeviceInfoData]):
+    updated_devices_info = await get_device_statuses(devices_info)
+    return updated_devices_info
+
+# @app.websocket("/ws")
+# async def websocket_endpoint(websocket: WebSocket):
+#     global connections  # Use global keyword if you're modifying the global variable, not necessary for append
+#     await websocket.accept()
+#     connections.append(websocket)  # This should work as connections is now properly defined
+#     try:
+#         while True:
+#             data = await websocket.receive_text()
+#             # Process received data and potentially send responses
+#             # Example: echo back the received message
+#             await websocket.send_text(f"Message text was: {data}")
+#     except WebSocketDisconnect:
+#         connections.remove(websocket)
+#         print("Client disconnected")
+
+# async def get_device_statuses(devices_info):
+#     # Assuming devices_info is a list of DeviceInfoData like objects
+#     tasks = [get_device_status(DeviceInfoData(**device_info)) for device_info in devices_info]
+#     updated_devices_info = await asyncio.gather(*tasks)
+#     return updated_devices_info
+

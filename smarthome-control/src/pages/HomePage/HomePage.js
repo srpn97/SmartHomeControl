@@ -17,8 +17,9 @@ const HomePage = () => {
 
     const [devicesData, setDevicesData] = useState([]);
     const isModalClosed = useSelector(state => state.modal.isModalClosed);
-    const [isSocketConnected, setIsSocketConnected] = useState(false);
     const [socket, setSocket] = useState(null);
+    const [count, setCount] = useState(0);
+    // const devicesDataRef = useRef(devicesData);
 
     const deviceImages = {
         SmartPlug: smartplug,
@@ -36,8 +37,14 @@ const HomePage = () => {
             let existingDevices = loadFromLocalStorage('selectedDevices') || [];
             if (existingDevices.length > 0) {
                 console.log('Existing Data', existingDevices);
+                if (count === 0) {
+                    getDevicesStatus(existingDevices);
+                    setCount(1);
+                } else {
+                    sendDataToServer(existingDevices);
+                }
                 // setDevicesData(existingDevices);
-                sendDataToServer(existingDevices);
+                // sendDataToServer(existingDevices);
             }
         };
         fetchData();
@@ -46,21 +53,19 @@ const HomePage = () => {
 
 
     //establish socket connection
-    useEffect(() => {
-        const newSocket = io('127.0.0.1:8000');
-        setSocket(newSocket);
-        newSocket.on('connect', () => {
-            console.log('WebSocket Connected');
-            setIsSocketConnected(true); // Update connection state
-        });
-        newSocket.on('disconnect', () => {
-            console.log('WebSocket Disconnected');
-            setIsSocketConnected(false); // Update connection state
-        });
-        return () => {
-            newSocket.disconnect();
-        };
-    }, []);
+    // useEffect(() => {
+    //     const newSocket = io('127.0.0.1:8000/ws');
+    //     setSocket(newSocket);
+    //     newSocket.on('connect', () => {
+    //         console.log('WebSocket Connected');
+    //     });
+    //     newSocket.on('disconnect', () => {
+    //         console.log('WebSocket Disconnected');
+    //     });
+    //     return () => {
+    //         newSocket.disconnect();
+    //     };
+    // }, []);
 
 
     //used to send data on load
@@ -70,7 +75,7 @@ const HomePage = () => {
     //         sendDataToServer(socket, devicesData);
     //     }
     // }, [isSocketConnected, devicesData, socket]); // Depend on isSocketConnected, devicesData, and socket
-    
+
 
     // This function gets called after the socket is confirmed to be connected
     useEffect(() => {
@@ -105,6 +110,65 @@ const HomePage = () => {
         }
     };
 
+    const getDevicesStatus = (data) => {
+        console.log('Sending data to new API');
+        const url = 'http://127.0.0.1:5000/device/details';
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(jsonResponse => {
+                console.log('Success:', jsonResponse);
+                setDevicesData(jsonResponse);
+                // Handle the jsonResponse here
+            })
+            .catch(error => {
+                console.error('Error during fetch:', error.message);
+            });
+    }
+
+    const toggleDevice = async (device) => {
+        const action = device.is_on ? "off" : "on"; // Determine the action based on the current state
+        const url = 'http://127.0.0.1:5000/device/control';
+        const data = {
+            action: action,
+            ip: device.ip,
+            socket_number: device.socket_number
+        };
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(jsonResponse => {
+                console.log('Success:', jsonResponse);
+                // getDevicesStatus(devicesData);
+                // Handle the jsonResponse here
+            })
+            .catch(error => {
+                console.error('Error during fetch:', error.message);
+            });
+    };
+
     const isPresent = useIsPresent();
     return (
         <div className='parent-container home-container'>
@@ -115,19 +179,21 @@ const HomePage = () => {
                             <div className='device-img'>
                                 <img src={deviceImages[device.device_type]} alt="Smart Device" />
                             </div>
-                            <div className='device-name'>
-                                {device.name}
+                            <div className='device-content'>
+                                <div className='device-name text'>
+                                    {device.name}
+                                </div>
+                                <div className='device-control'>
+                                    {/* Example toggle button, replace with your actual control logic */}
+                                    {/* <button onClick={() => toggleDevice(device.ip)}>{device.is_on ? 'Turn Off' : 'Turn On'}</button> */}
+                                    {device.is_on ? (
+                                        <button onClick={() => toggleDevice(device, false)}>Turn Off</button> // Assume toggleDevice is your function to handle the state change
+                                    ) : (
+                                        <button onClick={() => toggleDevice(device, true)}>Turn On</button>
+                                    )}
+                                </div>
                             </div>
-                            <div className='device-details'>
-                                IP: {device.ip}<br />
-                                Is On: {device.is_on ? 'Yes' : 'No'}<br />
-                                Is Child: {device.is_child ? 'Yes' : 'No'}<br />
-                                Socket Number: {device.socket_number !== null ? device.socket_number : 'N/A'}
-                            </div>
-                            <div className='device-control'>
-                                {/* Example toggle button, replace with your actual control logic */}
-                                {/* <button onClick={() => toggleDevice(device.ip)}>{device.is_on ? 'Turn Off' : 'Turn On'}</button> */}
-                            </div>
+
                         </div>
                     ))}
                 </div>
